@@ -1,6 +1,10 @@
 # Secrets
 .env
 
+# Node
+node_modules/
+dist/
+
 # Virtual environments
 .venv/
 venv/

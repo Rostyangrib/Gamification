@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: abac_backend
+    env_file:
+      - .env
+    environment:
+      # из контейнера подключаемся к PostgreSQL на хосте (Windows/Mac)
+      DATABASE_URL: postgresql://postgres:1234@host.docker.internal:5432/postgres
+      CORS_ORIGINS: http://localhost:5173
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: abac_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
