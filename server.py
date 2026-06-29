@@ -42,25 +42,54 @@ def core_completion_get_course_completion_status(courseid: int, userid: int) -> 
 
 @mcp.tool()
 def core_course_get_courses() -> str:
-    """Return all Moodle courses."""
+    """Return all Moodle courses with id, fullname and shortname."""
     return _api("core_course_get_courses")
 
 
 @mcp.tool()
 def core_enrol_get_enrolled_users(courseid: int) -> str:
-    """Get enrolled users by course id."""
+    """Get enrolled users by course id. Use core_course_get_courses first to find id by name."""
     return _api("core_enrol_get_enrolled_users", courseid=courseid)
 
 
 @mcp.tool()
 def core_enrol_get_users_courses(userid: int) -> str:
-    """Get the list of courses where a user is enrolled in."""
+    """Get courses for a user by userid. Each course includes progress (0-100 percent). Use core_user_get_users first to find id by name."""
     return _api("core_enrol_get_users_courses", userid=userid)
 
 
 @mcp.tool()
+def get_course_progress(courseid: int, userid: int) -> str:
+    """Get course completion progress percent for a user. Use for progress / прогресс / процент выполнения."""
+    try:
+        courses = moodle_api.call("core_enrol_get_users_courses", userid=userid)
+        for course in courses:
+            if course.get("id") == courseid:
+                return _out(
+                    {
+                        "courseid": courseid,
+                        "userid": userid,
+                        "course": course.get("fullname"),
+                        "progress": course.get("progress"),
+                        "enablecompletion": course.get("enablecompletion"),
+                    }
+                )
+        return _out(
+            {"error": f"User {userid} is not enrolled in course {courseid}"}
+        )
+    except Exception as e:
+        return _out({"error": str(e)})
+
+
+@mcp.tool()
+def core_course_completion_status(courseid: int, userid: int) -> str:
+    """Alias for course completion progress percent (same as get_course_progress)."""
+    return get_course_progress(courseid, userid)
+
+
+@mcp.tool()
 def core_user_get_users(key: str, value: str) -> str:
-    """Search for users. key: email, username, firstname, lastname, id, idnumber."""
+    """Search users by key: email, username, firstname, lastname, id, idnumber."""
     return _api(
         "core_user_get_users",
         criteria=[{"key": key, "value": value}],

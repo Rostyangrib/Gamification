@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any
 
@@ -54,9 +55,13 @@ def call(function: str, **params: Any) -> Any:
         f"{MOODLE_URL}/webservice/rest/server.php",
         data=payload,
         timeout=30.0,
+        follow_redirects=True,
     )
     response.raise_for_status()
-    data = response.json()
+    try:
+        data = response.json()
+    except json.JSONDecodeError:
+        raise MoodleError(response.text[:500] or "Moodle вернул не-JSON ответ")
 
     if isinstance(data, dict) and data.get("exception"):
         raise MoodleError(data.get("message", "Moodle API error"))

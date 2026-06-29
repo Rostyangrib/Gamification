@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      OLLAMA_HOST: http://host.docker.internal:11434
+      MAX_AGENT_STEPS: "5"
+    stdin_open: true
+    tty: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  mcp:
+    build: .
+    env_file: .env
+    command: ["python", "server.py"]
+    profiles: ["mcp"]
