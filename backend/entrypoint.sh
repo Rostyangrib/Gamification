@@ -31,7 +31,7 @@ python scripts/seed.py
 
 echo "Starting API server..."
 echo "----------------------------------------"
-echo "  Frontend:  http://localhost:5173"
+echo "  Frontend:  http://localhost:5173/chat"
 echo "  API:       http://localhost:8000/api/health"
 echo "  Не открывайте 0.0.0.0 в браузере — это не работает!"
 echo "----------------------------------------"

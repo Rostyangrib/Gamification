@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
-from app.routers import auth
+from app.routers import auth, chat
 
 app = FastAPI(
     title="ABAC Auth API",
@@ -20,11 +20,12 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(chat.router)
 
 
 @app.get("/")
 def root():
-    return RedirectResponse(url="http://localhost:5173/login")
+    return RedirectResponse(url="http://localhost:5173/chat")
 
 
 @app.exception_handler(HTTPException)

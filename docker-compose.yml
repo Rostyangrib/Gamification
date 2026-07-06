@@ -9,6 +9,7 @@ services:
       # из контейнера подключаемся к PostgreSQL на хосте (Windows/Mac)
       DATABASE_URL: postgresql://postgres:1234@host.docker.internal:5432/postgres
       CORS_ORIGINS: http://localhost:5173
+      OLLAMA_HOST: http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

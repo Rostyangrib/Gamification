@@ -13,6 +13,7 @@ COPY alembic.ini .
 COPY alembic ./alembic
 COPY app ./app
 COPY scripts ./scripts
+COPY mcp_server ./mcp_server
 COPY entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 

@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate('/welcome', { replace: true })
+      navigate('/chat', { replace: true })
     }
   }, [authLoading, user, navigate])
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
     try {
       await login(email.trim(), password)
       toast.success('Вход выполнен успешно')
-      navigate('/welcome')
+      navigate('/chat')
     } catch (err) {
       if (isAxiosError<AuthError>(err)) {
         if (err.response?.status === 403) {

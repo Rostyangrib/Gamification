@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import ChatPage from './pages/ChatPage'
 import LoginPage from './pages/LoginPage'
 import WelcomePage from './pages/WelcomePage'
 
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/welcome" element={<WelcomePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

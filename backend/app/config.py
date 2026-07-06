@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60 * 24
     cookie_name: str = "access_token"
     cors_origins: str = "http://localhost:5173"
+    ollama_model: str = "gemma4:e2b"
+    ollama_host: str = "http://localhost:11434"
+    moodle_url: str = ""
+    moodle_token: str = ""
 
 
 settings = Settings()
