@@ -9,7 +9,8 @@ from mcp.client.stdio import stdio_client
 
 from app.config import settings
 
-_MCP_SERVER = Path(__file__).resolve().parents[1] / "mcp_server" / "server.py"
+_BACKEND = Path(__file__).resolve().parents[2]
+_MCP_SERVER = _BACKEND / "mcp_server" / "server.py"
 
 
 def _to_ollama_tools(mcp_tools) -> list[dict]:
@@ -41,8 +42,19 @@ def _merge(names: list[str], results: list[object]) -> object:
     return merged
 
 
+def _mcp_server_env() -> dict[str, str]:
+    return {
+        "MOODLE_URL": settings.moodle_url,
+        "MOODLE_TOKEN": settings.moodle_token,
+    }
+
+
 async def run_mcp_prompt(prompt: str) -> tuple[object, list[str]]:
-    params = StdioServerParameters(command=sys.executable, args=[str(_MCP_SERVER)])
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=[str(_MCP_SERVER)],
+        env=_mcp_server_env(),
+    )
     client = ollama.Client(host=settings.ollama_host)
 
     async with stdio_client(params) as (read, write):
