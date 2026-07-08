@@ -8,6 +8,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from app.config import settings
+from app.services.moodle_simplify import simplify
 
 _BACKEND = Path(__file__).resolve().parents[2]
 _MCP_SERVER = _BACKEND / "mcp_server" / "server.py"
@@ -40,6 +41,16 @@ def _merge(names: list[str], results: list[object]) -> object:
             key = f"{key}_{i}"
         merged[key] = result
     return merged
+
+
+def _parse_tool_result(text: str, tool_name: str) -> object:
+    if not text.strip():
+        return {"error": f"Tool {tool_name} returned empty response"}
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return {"raw": text}
+    return simplify(parsed, tool_name)
 
 
 def _mcp_server_env() -> dict[str, str]:
@@ -85,9 +96,9 @@ async def run_mcp_prompt(prompt: str) -> tuple[object, list[str]]:
                 mcp_result = await session.call_tool(call.function.name, args)
                 text = mcp_result.content[0].text if mcp_result.content else "{}"
                 names.append(call.function.name)
-                try:
-                    results.append(json.loads(text))
-                except json.JSONDecodeError:
-                    results.append({"raw": text})
+                results.append(_parse_tool_result(text, call.function.name))
 
-            return _merge(names, results), names
+            merged = _merge(names, results)
+            if isinstance(merged, dict) and len(names) > 1:
+                merged = simplify(merged)
+            return merged, names
