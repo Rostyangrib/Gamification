@@ -1,7 +1,7 @@
 import json
+import os
 import sys
 from pathlib import Path
-from typing import Any
 
 import ollama
 from mcp import ClientSession, StdioServerParameters
@@ -53,18 +53,26 @@ def _parse_tool_result(text: str, tool_name: str) -> object:
     return simplify(parsed, tool_name)
 
 
-def _mcp_server_env() -> dict[str, str]:
-    return {
-        "MOODLE_URL": settings.moodle_url,
-        "MOODLE_TOKEN": settings.moodle_token,
-    }
+def _mcp_server_env(moodle_url: str, moodle_token: str) -> dict[str, str]:
+    env = {key: value for key, value in os.environ.items() if value is not None}
+    env["MOODLE_URL"] = moodle_url
+    env["MOODLE_TOKEN"] = moodle_token
+    return env
 
 
-async def run_mcp_prompt(prompt: str) -> tuple[object, list[str]]:
+async def run_mcp_prompt(
+    prompt: str,
+    *,
+    moodle_url: str,
+    moodle_token: str,
+) -> tuple[object, list[str]]:
+    if not moodle_url.strip() or not moodle_token.strip():
+        raise ValueError("Не заданы URL или токен Moodle для выбранного сервиса")
+
     params = StdioServerParameters(
         command=sys.executable,
         args=[str(_MCP_SERVER)],
-        env=_mcp_server_env(),
+        env=_mcp_server_env(moodle_url.rstrip("/"), moodle_token),
     )
     client = ollama.Client(host=settings.ollama_host)
 

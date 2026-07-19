@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import ChatPage from './pages/ChatPage'
 import LoginPage from './pages/LoginPage'
+import ManagerPage from './pages/ManagerPage'
 import WelcomePage from './pages/WelcomePage'
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/manager" element={<ManagerPage />} />
           <Route path="/welcome" element={<WelcomePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

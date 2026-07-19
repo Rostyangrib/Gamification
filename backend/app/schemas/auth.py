@@ -25,6 +25,7 @@ class UserResponse(BaseModel):
     clearance_level: int
     location: str
     is_active: bool
+    moodle_id: int | None = None
 
     model_config = {"from_attributes": True}
 

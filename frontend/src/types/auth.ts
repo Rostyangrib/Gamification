@@ -7,6 +7,7 @@ export interface User {
   clearance_level: number
   location: string
   is_active: boolean
+  moodle_id?: number | null
 }
 
 export interface AuthError {

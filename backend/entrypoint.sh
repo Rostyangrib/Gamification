@@ -26,8 +26,8 @@ PY
 echo "Running migrations..."
 alembic upgrade head
 
-echo "Seeding data..."
-python scripts/seed.py
+echo "Initializing database (tables + seed)..."
+python scripts/init_db.py
 
 echo "Starting API server..."
 echo "----------------------------------------"

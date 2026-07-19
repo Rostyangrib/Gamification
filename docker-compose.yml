@@ -27,6 +27,7 @@ services:
       DATABASE_URL: postgresql://postgres:1234@db:5432/postgres
       CORS_ORIGINS: http://localhost:5173
       OLLAMA_HOST: http://host.docker.internal:11434
+      INIT_DB: "true"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

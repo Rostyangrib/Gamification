@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { useAuth } from '../context/AuthContext'
 
 export default function WelcomePage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
 
   const handleLogout = async () => {
+    setConfirmLogoutOpen(false)
     setIsLoggingOut(true)
     try {
       await logout()
@@ -47,7 +50,7 @@ export default function WelcomePage() {
           </div>
 
           <button
-            onClick={handleLogout}
+            onClick={() => setConfirmLogoutOpen(true)}
             disabled={isLoggingOut}
             className="px-6 py-2.5 rounded-md border border-blue-300 bg-white hover:bg-blue-50 text-blue-700 font-medium transition disabled:opacity-50"
           >
@@ -55,6 +58,18 @@ export default function WelcomePage() {
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogoutOpen}
+        title="Выход из системы"
+        message="Вы действительно хотите выйти из системы?"
+        confirmLabel="Выйти"
+        cancelLabel="Отмена"
+        onConfirm={() => {
+          void handleLogout()
+        }}
+        onCancel={() => setConfirmLogoutOpen(false)}
+      />
     </div>
   )
 }

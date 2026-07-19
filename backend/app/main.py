@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
-from app.routers import auth, chat
+from app.routers import auth, chat, manager
 
 app = FastAPI(
     title="ABAC Auth API",
@@ -21,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(manager.router)
 
 
 @app.get("/")

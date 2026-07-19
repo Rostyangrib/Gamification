@@ -49,6 +49,7 @@ class User(Base):
         nullable=False,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    moodle_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     def to_abac_dict(self) -> dict:
@@ -61,4 +62,5 @@ class User(Base):
             "clearanceLevel": self.clearance_level,
             "location": self.location.value,
             "isActive": self.is_active,
+            "moodleId": self.moodle_id,
         }
