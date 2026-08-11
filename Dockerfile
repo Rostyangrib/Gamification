@@ -10,6 +10,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY moodle_api.py moodle_simplify.py server.py main.py ./
+COPY moodle_api.py moodle_simplify.py mcp_agent.py server.py main.py ./
 
 CMD ["python", "main.py"]

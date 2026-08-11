@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     moodle_url: str = ""
     moodle_token: str = ""
+    max_agent_steps: int = 5
 
 
 settings = Settings()

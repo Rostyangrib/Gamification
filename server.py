@@ -22,7 +22,7 @@ def _api(function: str, **params: object) -> str:
 def core_completion_get_activities_completion_status(
     courseid: int, userid: int
 ) -> str:
-    """Return the activities completion status for a user in a course."""
+    """Статус выполнения активностей пользователя в курсе. Параметры: courseid, userid."""
     return _api(
         "core_completion_get_activities_completion_status",
         courseid=courseid,
@@ -32,7 +32,7 @@ def core_completion_get_activities_completion_status(
 
 @mcp.tool()
 def core_completion_get_course_completion_status(courseid: int, userid: int) -> str:
-    """Returns course completion status."""
+    """Статус завершения курса для пользователя. Параметры: courseid, userid."""
     return _api(
         "core_completion_get_course_completion_status",
         courseid=courseid,
@@ -42,25 +42,25 @@ def core_completion_get_course_completion_status(courseid: int, userid: int) -> 
 
 @mcp.tool()
 def core_course_get_courses() -> str:
-    """Return all Moodle courses with id, fullname and shortname."""
+    """Список всех курсов Moodle: id, fullname, shortname. Возвращает информацию по курсу/курсам."""
     return _api("core_course_get_courses")
 
 
 @mcp.tool()
 def core_enrol_get_enrolled_users(courseid: int) -> str:
-    """Get enrolled users by course id. Use core_course_get_courses first to find id by name."""
+    """Список записанных на курс пользователей по courseid. Сначала найди courseid через core_course_get_courses."""
     return _api("core_enrol_get_enrolled_users", courseid=courseid)
 
 
 @mcp.tool()
 def core_enrol_get_users_courses(userid: int) -> str:
-    """Get courses for a user by userid. Each course includes progress (0-100 percent). Use core_user_get_users first to find id by name."""
+    """Курсы пользователя по userid. В каждом курсе есть progress (0–100%). Сначала найди userid через core_user_get_users или core_user_get_users_by_field."""
     return _api("core_enrol_get_users_courses", userid=userid)
 
 
 @mcp.tool()
 def get_course_progress(courseid: int, userid: int) -> str:
-    """Get course completion progress percent for a user. Use for progress / прогресс / процент выполнения."""
+    """Прогресс / процент выполнения курса для пользователя. Параметры: courseid, userid."""
     try:
         courses = moodle_api.call("core_enrol_get_users_courses", userid=userid)
         for course in courses:
@@ -83,13 +83,14 @@ def get_course_progress(courseid: int, userid: int) -> str:
 
 @mcp.tool()
 def core_course_completion_status(courseid: int, userid: int) -> str:
-    """Alias for course completion progress percent (same as get_course_progress)."""
+    """Прогресс / процент выполнения курса (то же, что get_course_progress). Параметры: courseid, userid."""
     return get_course_progress(courseid, userid)
 
 
 @mcp.tool()
 def core_user_get_users(key: str, value: str) -> str:
-    """Search users by key: email, username, firstname, lastname, id, idnumber."""
+    """Поиск пользователей. key: email, username, firstname, lastname, id, idnumber.
+    Чтобы получить всех пользователей: key='email', value='%'."""
     return _api(
         "core_user_get_users",
         criteria=[{"key": key, "value": value}],
@@ -97,10 +98,20 @@ def core_user_get_users(key: str, value: str) -> str:
 
 
 @mcp.tool()
+def core_user_get_users_by_field(field: str, values: list[str]) -> str:
+    """Информация о пользователе по уникальному полю. field: id, idnumber, username, email."""
+    return _api(
+        "core_user_get_users_by_field",
+        field=field,
+        values=values,
+    )
+
+
+@mcp.tool()
 def gradereport_user_get_grade_items(
     courseid: int, userid: int = 0, groupid: int = 0
 ) -> str:
-    """Returns the complete list of grade items for users in a course."""
+    """Полный список элементов оценок пользователей в курсе. Параметры: courseid, userid (0 — все), groupid."""
     return _api(
         "gradereport_user_get_grade_items",
         courseid=courseid,
@@ -113,7 +124,7 @@ def gradereport_user_get_grade_items(
 def gradereport_user_get_grades_table(
     courseid: int, userid: int = 0, groupid: int = 0
 ) -> str:
-    """Get the user/s report grades table for a course."""
+    """Таблица оценок пользователя(ей) в курсе. Параметры: courseid, userid (0 — все), groupid."""
     return _api(
         "gradereport_user_get_grades_table",
         courseid=courseid,

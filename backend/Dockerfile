@@ -6,15 +6,15 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY alembic.ini .
-COPY alembic ./alembic
-COPY app ./app
-COPY scripts ./scripts
-COPY mcp_server ./mcp_server
-COPY entrypoint.sh /entrypoint.sh
+COPY backend/alembic.ini .
+COPY backend/alembic ./alembic
+COPY backend/app ./app
+COPY backend/scripts ./scripts
+COPY server.py moodle_api.py moodle_simplify.py mcp_agent.py ./mcp/
+COPY backend/entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 8000

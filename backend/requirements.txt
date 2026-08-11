@@ -9,6 +9,7 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 bcrypt<4.1.0
 python-multipart>=0.0.12
-mcp>=1.28.0
+mcp>=1.28.0,<2.0.0
 ollama>=0.4.0
 httpx>=0.28.0
+python-dotenv>=1.0.0

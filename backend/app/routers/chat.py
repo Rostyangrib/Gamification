@@ -9,7 +9,7 @@ from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.manager import ExternalServiceResponse, MoodleCredentials
 from app.services import moodle_client
-from app.services.mcp_chat import run_mcp_prompt
+from app.services.mcp_chat import format_chat_error, run_mcp_prompt
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -87,5 +87,5 @@ async def chat(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Ошибка MCP/Ollama: {e}",
+            detail=f"Ошибка MCP/Ollama: {format_chat_error(e)}",
         ) from e

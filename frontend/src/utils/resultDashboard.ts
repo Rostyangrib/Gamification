@@ -32,6 +32,7 @@ const TOOL_LABELS: Record<string, string> = {
   core_enrol_get_enrolled_users: 'Записанные пользователи',
   core_enrol_get_users_courses: 'Курсы пользователя',
   core_user_get_users: 'Пользователи',
+  core_user_get_users_by_field: 'Пользователи',
   get_course_progress: 'Прогресс курса',
   core_course_completion_status: 'Прогресс курса',
   gradereport_user_get_grade_items: 'Оценки',

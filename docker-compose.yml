@@ -19,7 +19,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: abac_backend
     env_file:
       - .env
@@ -27,6 +28,7 @@ services:
       DATABASE_URL: postgresql://postgres:1234@db:5432/postgres
       CORS_ORIGINS: http://localhost:5173
       OLLAMA_HOST: http://host.docker.internal:11434
+      MAX_AGENT_STEPS: "5"
       INIT_DB: "true"
     extra_hosts:
       - "host.docker.internal:host-gateway"

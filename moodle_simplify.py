@@ -9,8 +9,9 @@ import sys
 from datetime import datetime
 from typing import Any, Callable
 
-if sys.platform == "win32":
+if sys.platform == "win32" and hasattr(sys.stdin, "reconfigure"):
     sys.stdin.reconfigure(encoding="utf-8")
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 COMPLETION_STATE = {
@@ -30,6 +31,7 @@ MOODLE_SOURCES = (
     "core_enrol_get_enrolled_users",
     "core_enrol_get_users_courses",
     "core_user_get_users",
+    "core_user_get_users_by_field",
     "get_course_progress",
     "gradereport_user_get_grade_items",
     "gradereport_user_get_grades_table",
@@ -265,6 +267,7 @@ TRANSFORMERS: dict[str, Callable[[Any], Any]] = {
     "core_enrol_get_enrolled_users": simplify_enrolled_users,
     "core_enrol_get_users_courses": simplify_users_courses,
     "core_user_get_users": simplify_get_users,
+    "core_user_get_users_by_field": simplify_enrolled_users,
     "get_course_progress": simplify_course_progress,
     "core_course_completion_status": simplify_course_progress,
     "gradereport_user_get_grade_items": simplify_grade_items,
