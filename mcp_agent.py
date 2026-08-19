@@ -4,12 +4,67 @@ from typing import Any
 
 from moodle_simplify import simplify
 
-SYSTEM_PROMPT = """Ты ассистент Moodle. Отвечай только вызовом tools — никогда не задавай уточняющих вопросов.
+SYSTEM_PROMPT = """Ты ассистент Moodle. Для получения данных используй tools и никогда не задавай уточняющих вопросов.
+
+Когда данных достаточно для ответа, заверши работу без повторного вызова того же tool с теми же аргументами.
 
 Правила интерпретации идентификаторов (если поле не указано явно):
 - Пользователь: только цифры (например, 42) → ID, иначе → username (включая u1, ivanov, user_01).
 - Курс: только цифры (например, 5) → ID, иначе → shortname (включая MATH101, course1).
 """
+
+_USER_LOOKUP_TOOLS = {"core_user_get_users", "core_user_get_users_by_field"}
+_COURSE_LOOKUP_TOOLS = {"core_course_get_courses"}
+_FINAL_TOOLS = {
+    "core_completion_get_activities_completion_status",
+    "core_completion_get_course_completion_status",
+    "core_course_completion_status",
+    "core_enrol_get_enrolled_users",
+    "core_enrol_get_users_courses",
+    "get_course_progress",
+    "gradereport_user_get_grade_items",
+    "gradereport_user_get_grades_table",
+}
+
+
+def tool_results_are_final(prompt: str, names: list[str]) -> bool:
+    """Avoid a second LLM pass when the tool result already answers the request."""
+    called = set(names)
+    if called & _FINAL_TOOLS:
+        return True
+
+    text = prompt.casefold()
+    if called and called <= _USER_LOOKUP_TOOLS:
+        downstream = (
+            "курс",
+            "course",
+            "прогресс",
+            "progress",
+            "заверш",
+            "completion",
+            "оцен",
+            "grade",
+            "запис",
+            "enrol",
+        )
+        return not any(hint in text for hint in downstream)
+
+    if called and called <= _COURSE_LOOKUP_TOOLS:
+        downstream = (
+            "пользоват",
+            "user",
+            "участ",
+            "enrol",
+            "прогресс",
+            "progress",
+            "заверш",
+            "completion",
+            "оцен",
+            "grade",
+        )
+        return not any(hint in text for hint in downstream)
+
+    return False
 
 
 def safe_text(text: str) -> str:
@@ -113,6 +168,7 @@ async def run_agent_prompt(
     ]
     last_results: object | None = None
     tools_used: list[str] = []
+    seen_calls: set[str] = set()
     no_tool_retries = 0
 
     for _ in range(max_steps):
@@ -147,6 +203,16 @@ async def run_agent_prompt(
         results: list[object] = []
         for call in tool_calls:
             args = parse_args(call.function.arguments)
+            signature = json.dumps(
+                [call.function.name, sanitize(args)],
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            if signature in seen_calls:
+                if last_results is not None:
+                    return last_results, tools_used
+                continue
+            seen_calls.add(signature)
             text, parsed = await call_tool(session, call.function.name, args)
             names.append(call.function.name)
             tools_used.append(call.function.name)
@@ -159,6 +225,13 @@ async def run_agent_prompt(
                 }
             )
 
+        if not results:
+            if last_results is not None:
+                return last_results, tools_used
+            raise ValueError("Модель повторила вызов tool, не получив новых данных")
+
         last_results = sanitize(merge(names, results))
+        if tool_results_are_final(prompt, names):
+            return last_results, tools_used
 
     return last_results, tools_used

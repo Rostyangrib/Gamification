@@ -177,6 +177,35 @@ def find_user_id_by_email(url: str, token: str, email: str) -> int:
     return int(users[0]["id"])
 
 
+def find_user_ids_by_email(url: str, token: str, emails: list[str]) -> dict[str, int]:
+    """Return Moodle user IDs keyed by normalized email using one API request."""
+    normalized_emails = list(
+        dict.fromkeys(email.strip().casefold() for email in emails if email.strip())
+    )
+    if not normalized_emails:
+        return {}
+
+    data = call(
+        url,
+        token,
+        "core_user_get_users_by_field",
+        field="email",
+        values=normalized_emails,
+    )
+    if not isinstance(data, list):
+        raise MoodleClientError("Неожиданный ответ при получении пользователей Moodle")
+
+    result: dict[str, int] = {}
+    for user in data:
+        if not isinstance(user, dict):
+            continue
+        email = str(user.get("email") or "").strip().casefold()
+        user_id = user.get("id")
+        if email and user_id is not None:
+            result[email] = int(user_id)
+    return result
+
+
 def list_courses(url: str, token: str) -> list[dict[str, Any]]:
     data = call(url, token, "core_course_get_courses")
     if not isinstance(data, list):

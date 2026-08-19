@@ -73,3 +73,89 @@ def test_agent_uses_system_prompt_and_calls_tools_in_a_loop():
     assert client.messages[2][-1]["tool_name"] == "find_courses"
     assert tools_used == ["find_user", "find_courses"]
     assert result == {"tool": "find_courses", "args": {"userid": 42}}
+
+
+class RepeatingClient:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def chat(self, *, model, messages, tools):
+        del model, messages, tools
+        self.calls += 1
+        return SimpleNamespace(
+            message=SimpleNamespace(
+                content="",
+                tool_calls=[_tool_call("list_users", {})],
+            )
+        )
+
+
+class CountingSession(FakeSession):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def call_tool(self, name, args):
+        self.calls += 1
+        return await super().call_tool(name, args)
+
+
+def test_agent_stops_before_repeating_identical_tool_call():
+    client = RepeatingClient()
+    session = CountingSession()
+
+    result, tools_used = asyncio.run(
+        run_agent_prompt(
+            session,
+            client,
+            [],
+            "Список пользователей",
+            model="test-model",
+            max_steps=5,
+        )
+    )
+
+    assert client.calls == 2
+    assert session.calls == 1
+    assert tools_used == ["list_users"]
+    assert result == {"tool": "list_users", "args": {}}
+
+
+class SingleResponseClient:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def chat(self, *, model, messages, tools):
+        del model, messages, tools
+        self.calls += 1
+        if self.calls > 1:
+            raise AssertionError("A final tool result must not trigger another LLM request")
+        return SimpleNamespace(
+            message=SimpleNamespace(
+                content="",
+                tool_calls=[
+                    _tool_call("core_user_get_users", {"key": "email", "value": "%"})
+                ],
+            )
+        )
+
+
+def test_agent_returns_user_list_without_second_llm_request():
+    client = SingleResponseClient()
+
+    result, tools_used = asyncio.run(
+        run_agent_prompt(
+            FakeSession(),
+            client,
+            [],
+            "Список пользователей Moodle",
+            model="test-model",
+            max_steps=5,
+        )
+    )
+
+    assert client.calls == 1
+    assert tools_used == ["core_user_get_users"]
+    assert result == {
+        "tool": "core_user_get_users",
+        "args": {"key": "email", "value": "%"},
+    }

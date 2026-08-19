@@ -10,11 +10,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sqlalchemy import select, text
 
+from app.config import settings
 from app.core.security import hash_password
 from app.database import Base, SessionLocal, engine
 from app.models import AuditLog, ExternalService, Policy, User  # noqa: F401 — регистрируем модели
 from app.models.policy import PolicyEffect
 from app.models.user import Department, UserLocation, UserRole
+from app.services import moodle_client
 
 SEED_PASSWORD = "Moodle123!"
 
@@ -27,7 +29,7 @@ USERS = [
         "clearance_level": 5,
         "location": UserLocation.OFFICE,
         "is_active": True,
-        "moodle_id": 4,
+        "moodle_id": None,
     },
     {
         "email": "wotblitz1191@gmail.com",
@@ -37,7 +39,7 @@ USERS = [
         "clearance_level": 3,
         "location": UserLocation.OFFICE,
         "is_active": True,
-        "moodle_id": 5,
+        "moodle_id": None,
     },
     {
         "email": "u2@user.com",
@@ -47,7 +49,7 @@ USERS = [
         "clearance_level": 3,
         "location": UserLocation.VPN,
         "is_active": True,
-        "moodle_id": 6,
+        "moodle_id": None,
     },
     {
         "email": "sss@ss.s",
@@ -57,7 +59,7 @@ USERS = [
         "clearance_level": 5,
         "location": UserLocation.OFFICE,
         "is_active": True,
-        "moodle_id": 7,
+        "moodle_id": None,
     },
     {
         "email": "manager@work.com",
@@ -67,7 +69,7 @@ USERS = [
         "clearance_level": 4,
         "location": UserLocation.OFFICE,
         "is_active": True,
-        "moodle_id": 8,
+        "moodle_id": None,
     },
     {
         "email": "dmitry@work.com",
@@ -77,7 +79,7 @@ USERS = [
         "clearance_level": 3,
         "location": UserLocation.REMOTE,
         "is_active": True,
-        "moodle_id": 9,
+        "moodle_id": None,
     },
     {
         "email": "admin@test.com",
@@ -211,8 +213,6 @@ def _seed_users(db, *, force: bool) -> None:
     for user_data in USERS:
         existing = db.scalar(select(User).where(User.email == user_data["email"]))
         if existing:
-            if user_data.get("moodle_id") is not None and existing.moodle_id != user_data["moodle_id"]:
-                existing.moodle_id = user_data["moodle_id"]
             continue
         db.add(User(**user_data, password_hash=password_hash))
     db.commit()
@@ -227,6 +227,55 @@ def _seed_policies(db, *, force: bool) -> None:
         db.add(Policy(**policy_data, is_active=True))
     db.commit()
     print("Policies seeded.")
+
+
+def _sync_moodle_ids(db) -> None:
+    url = settings.moodle_url.strip().rstrip("/")
+    token = settings.moodle_token.strip()
+    if not url or not token:
+        service = db.scalar(select(ExternalService).order_by(ExternalService.id))
+        if service:
+            url = service.url.strip().rstrip("/")
+            credential = (service.token or service.login or "").strip()
+            try:
+                token = moodle_client.resolve_token(
+                    url,
+                    credential,
+                    service.password or "",
+                )
+            except moodle_client.MoodleClientError as exc:
+                print(f"WARNING: Moodle ID sync credentials failed: {exc}")
+                return
+
+    if not url or not token:
+        print(
+            "Moodle ID sync skipped: configure MOODLE_URL/MOODLE_TOKEN "
+            "or save a Moodle service in the manager."
+        )
+        return
+
+    users = list(db.scalars(select(User).order_by(User.id)).all())
+    try:
+        moodle_ids = moodle_client.find_user_ids_by_email(
+            url,
+            token,
+            [user.email for user in users],
+        )
+    except moodle_client.MoodleClientError as exc:
+        print(f"WARNING: Moodle ID sync failed: {exc}")
+        return
+
+    updated = 0
+    matched = 0
+    for user in users:
+        moodle_id = moodle_ids.get(user.email.strip().casefold())
+        if moodle_id is not None:
+            matched += 1
+        if user.moodle_id != moodle_id:
+            user.moodle_id = moodle_id
+            updated += 1
+    db.commit()
+    print(f"Moodle IDs synchronized: matched={matched}, updated={updated}, total={len(users)}.")
 
 
 def init_db() -> None:
@@ -245,6 +294,7 @@ def init_db() -> None:
 
         _seed_users(db, force=reset)
         _seed_policies(db, force=reset)
+        _sync_moodle_ids(db)
 
     print("init_db completed successfully.")
 

@@ -1,8 +1,13 @@
 import json
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.server import Settings as FastMCPSettings
 
 import moodle_api
+
+# mcp 1.29.0 leaves Settings.lifespan as an unresolved forward reference.
+# Rebuild after FastMCP has been defined so pydantic-settings can inspect it.
+FastMCPSettings.model_rebuild()
 
 mcp = FastMCP("moodle-mcp")
 
